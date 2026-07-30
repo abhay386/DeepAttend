@@ -9,3 +9,13 @@ def footer_home():
         <img src='{logo}' style="max-height:50px;"/>
         </div>
 """, unsafe_allow_html=True)
+
+def footer_dashboard():
+    logo = get_image_src("src/images/my_name.png")
+    
+    st.markdown(f"""
+        <div style="display:flex; justify-content:center; align-item:center; margin-top:20px; ">
+        <p style="font-size:1.25rem; padding-top:0.5rem; font-weight:bold; color:black; ">Made with ❤️ by &nbsp;<p/>
+        <img src='{logo}' style="max-height:50px;"/>
+        </div>
+""", unsafe_allow_html=True)

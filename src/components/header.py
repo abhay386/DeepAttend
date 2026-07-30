@@ -22,3 +22,17 @@ def header_home():
         """, 
         unsafe_allow_html=True
     )
+
+
+def header_dashboard():
+
+    logo_url = get_image_src("src/images/attandace_logo.png")
+    st.markdown(
+        f"""
+    <div style='display:flex;  align-items:left; justify-content:center;'>
+        <img src='{logo_url}' style='height:90px;'>
+       <h2 style="text-align:center; color:#5564f0;">Deep<br/> Attend</h2>
+    </div>
+        """, 
+        unsafe_allow_html=True
+    )

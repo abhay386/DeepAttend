@@ -22,7 +22,9 @@ def style_background_home():
 def style_background_dashboard():
     st.markdown("""
         <style>
-
+        .stApp{
+            background:#E0E3FF !important;
+        }
 
 
         </style>
@@ -70,10 +72,10 @@ def style_base_layout():
             border-radius:1.5rem !important;
         }
 
-          button[kind="secondary"]{
+        button[kind="secondary"]{
             border-radius:1.5rem !important;
-            background:#EB459E;
-            # color:black !important;
+            background:#EB459E !important;
+            # color:black !important;   
             padding :10px 20px !important;
             border :none !important;
             transition: transform 0.1s ease-in-out !important;
