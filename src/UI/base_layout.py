@@ -84,7 +84,7 @@ def style_base_layout():
 
         button[kind="tertiary"]{
             border-radius:1.5rem !important;
-            background:black;
+            background-color:black !important;
             color:white !important;
             padding :10px 20px !important;
             border :none !important;
