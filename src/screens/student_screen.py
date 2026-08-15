@@ -18,7 +18,7 @@ def student_dahboard():
     with col2:
         st.header(f"Welcome, {student_data['name']}")
         if st.button("Logout", type="secondary", key="Studentlogoutbackbtn", shortcut="control+backspace"):
-            st.session_state["login-type"] = False 
+            st.session_state["login-type"] = None
             del st.session_state.student_data
             st.rerun()
 
@@ -62,10 +62,10 @@ def student_dahboard():
 
 
         stats = stats_map.get(sid, {"total":0, "attended":0}) 
-        def unenroll_btn():
-            if st.button("unenroll from this course", type='tertiary', width='stretch',icon=":material/delete_forever:" ):
+        def unenroll_btn(subject_id=sid, subject_name=sub['name']):
+            if st.button("unenroll from this course", type='tertiary', width='stretch',icon=":material/delete_forever:", key=f"unenroll_{subject_id}" ):
                 unenroll_student_to_subject(student_id, sid)
-                st.toast(f"Unenrolled from {sub['name']} Successfully!")
+                st.toast(f"Unenrolled from {subject_name} Successfully!")
                 import time
                 time.sleep(1)
                 st.rerun()
@@ -88,10 +88,19 @@ def student_dahboard():
 
 def student_screen():
     from src.pipelines.voice_pipeline import get_voice_embeddings
-    from src.pipelines.face_pipeline import predict_attandance,get_face_embeddings,train_classifier
+    from src.pipelines.face_pipeline import predict_attandance,get_face_embeddings,refresh_face_model
     
     style_background_dashboard()
     style_base_layout()
+
+
+    # if st.button("TEST DB CONNECTION"):
+    #    from src.database.db import create_student
+    #    try:
+    #        result = create_student("Test User", face_embeddings=None, voice_embeddings=None)
+    #        st.success(f"Worked: {result}")
+    #    except Exception as e:
+    #        st.error(f"Failed: {e}")
 
     if 'student_data' in st.session_state:
         student_dahboard()
@@ -109,7 +118,12 @@ def student_screen():
     st.space()
     photo_source = st.camera_input("Position your face in the center")
 
-    show_registeration = False
+    if "show_registration" not in st.session_state:
+        st.session_state.show_registration = False
+
+    if "registration_photo" not in st.session_state:
+        st.session_state.registration_photo = None
+
     if photo_source:
        img = np.array(Image.open(photo_source))
 
@@ -118,8 +132,12 @@ def student_screen():
 
           if num_faces == 0:
               st.warning("Face not Found")
+              st.session_state.show_registration = False
+              st.session_state.registration_photo = None
           elif num_faces > 1:
               st.warning("Multiple faces found")
+              st.session_state.show_registration = False
+              st.session_state.registration_photo = None
           else:
                 if detected:
                     student_id  =  list(detected.keys())[0]
@@ -137,9 +155,10 @@ def student_screen():
 
                 else:
                     st.info('Face not recognized! You might be a new Student') 
-                    show_registeration =  True
+                    st.session_state.show_registration = True
+                    st.session_state.registration_photo = img
 
-    if show_registeration :
+    if st.session_state.show_registration:
         with st.container(border= True):
 
             st.header("Register new profile")
@@ -158,7 +177,10 @@ def student_screen():
             if st.button('Create Account', type="primary"):
                 if new_name:
                     with st.spinner("Creating Profile..."):
-                        img = np.array(Image.open(photo_source))
+                        img = st.session_state.registration_photo
+                        if img is None and photo_source:
+                            img = np.array(Image.open(photo_source))
+
                         encodings =  get_face_embeddings(img)
                         if encodings:
                             face_emb =  encodings[0].tolist()
@@ -167,19 +189,30 @@ def student_screen():
                             if audio_data :
                                 voice_emb =  get_voice_embeddings(audio_data.read())
 
-                            response_data =  create_student(new_name, face_embeddings= face_emb, voice_embeddings=  voice_emb)
+                            try:
+                                response_data =  create_student(new_name, face_embeddings= face_emb, voice_embeddings=  voice_emb)
+                            except Exception as e:
+                                st.error(f"Database connection failed while creating your profile, Check internet connection: {e}")
+                                return
 
                             if response_data:
-                                # train_classifier()
+                                try:
+                                    refresh_face_model()
+                                except Exception:
+                                    pass
                                 st.session_state.is_logged_in =  True
                                 st.session_state.user_role = 'student'
                                 st.session_state.student_data =  response_data[0]
+                                st.session_state.show_registration = False
+                                st.session_state.registration_photo = None
                                 st.toast(f"Profile Created! Hi {new_name}!")
                                 import time
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.error("Couldn't capture your facial features for registeration ")
+                                st.error("Couldn't create your profile")
+                        else:
+                            st.error("Couldn't capture your facial features for registeration ")
 
                         
                 else:

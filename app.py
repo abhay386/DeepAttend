@@ -4,6 +4,11 @@ from src.screens.teacher_screen import teacher_screen
 from src.screens.home_screen import home_screen
 from src.components.auto_enroll_dialog import auto_enroll_dialog
 def main():
+
+    st.set_page_config(
+        page_title="DeepAttend- Making Attendance faster using AI",
+        page_icon='https://i.ibb.co/844D9Lrt/mascot-student.png'
+    )
     if 'login-type' not in st.session_state:
         st.session_state['login-type'] = None
 
@@ -16,6 +21,9 @@ def main():
             student_screen()
         case None:
             home_screen()
+        case _:
+            st.session_state['login-type'] = None
+            st.rerun()
         
 
     join_code = st.query_params.get('join-code')

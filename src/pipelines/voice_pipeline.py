@@ -37,8 +37,8 @@ def identify_speaker(new_embeddings,candidates_dict, threshold= 0.65 ):
                 best_score =  similarity
                 best_sid =  sid
 
-        if best_score >= threshold:
-            return best_sid , best_score
+    if best_score >= threshold:
+        return best_sid , best_score
 
     return None , best_score 
 

@@ -1,7 +1,6 @@
 
 import dlib
 import numpy as np 
-from sklearn.svm import SVC
 import streamlit as st
 import face_recognition_models
 from src.database.db import get_all_students
@@ -31,13 +30,13 @@ def get_face_embeddings(image_np):
 
     for face in faces:
         shape = sp(image_np, face)
-        face_descriptior  = facerec.compute_face_descriptor(image_np, shape, 1) #128embeddings
+        face_descriptior  = facerec.compute_face_descriptor(image_np, shape, 5) #128embeddings
 
         encodings.append(np.array(face_descriptior)) 
     return encodings
   
-@st.cache_resource
-def get_trained_model():
+@st.cache_data
+def get_face_database():
     X = []
     y = []
 
@@ -55,22 +54,13 @@ def get_trained_model():
 
 
     if len(X)==0:
-        return 0
+        return None
 
-    clf  = SVC(kernel="linear",probability=True, class_weight ="balanced" )
+    return {"X": X,"y": y}
 
-    try:
-        clf.fit(X,y)
-
-    except ValueError:
-        pass
-
-    return {"clf":clf, "X":X,"y":y}
-
-def train_classifier():
-    st.cache_resource.clear()
-    model_data = get_trained_model()
-    return model_data
+def refresh_face_model():
+    get_face_database.clear()
+    return get_face_database()
 
 
 # def predict_attandance(image_np):
@@ -119,7 +109,10 @@ def predict_attandance(image_np):
 
     detcted_student = {}
 
-    model_data = get_trained_model()
+    try:
+        model_data = get_face_database()
+    except Exception:
+        model_data = None
 
     if not model_data:
         return detcted_student,  len(encodings)
@@ -128,7 +121,7 @@ def predict_attandance(image_np):
     y_train = model_data["y"]
 
     # all_students = sorted(list(set(y_train)))
-    resemblance_score = 0.6
+    resemblance_score = 0.45
 
     for encoding in encodings:
         best_match_id = None

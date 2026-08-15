@@ -35,7 +35,7 @@ def teacher_dashboard():
     with col2:
         st.header(f"Welcome, {teacher_data['name']}")
         if st.button("Logout", type="secondary", key="logoutbackbtn", shortcut="control+backspace"):
-            st.session_state["login-type"] = False 
+            st.session_state["login-type"] = None
             del st.session_state.teacher_data
             st.rerun()
 
@@ -129,7 +129,7 @@ def teacher_tab_take_attandance():
 
                 for idx, img in enumerate(st.session_state.attendance_images):
                     np_img = np.array(img.convert('RGB'))
-                    detected,_,_ =  predict_attandance(np_img)
+                    detected, _ =  predict_attandance(np_img)
 
 
                     if detected:
@@ -142,12 +142,12 @@ def teacher_tab_take_attandance():
 
                 enrolled_students  =  enrolled_res.data
 
+                results, attendance_to_log = [],[]
+
                 if not enrolled_students:
                     st.warning("No students enrolled in this course")
 
                 else:
-                    results, attendance_to_log = [],[]
-
                     current_timestamp  = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
 
@@ -171,7 +171,8 @@ def teacher_tab_take_attandance():
                             'is_present':bool(is_present)
                         })
 
-            attendance_result_dialog(pd.DataFrame(results),attendance_to_log)
+            if results:
+                attendance_result_dialog(pd.DataFrame(results),attendance_to_log)
 
     with c3:
       if st.button("Voice Attendance", width='stretch',icon=':material/mic:', type='primary'):
@@ -198,18 +199,18 @@ def teacher_tab_manage_subjects():
                 ("👥","Students", sub["total_students"]),
                 ("🕰️", "Classes", sub["total_classes"])
             ]
-        def share_button():
-            if st.button(f"Share Code: {sub['name']}", key=f"share_{sub['subject_code']}", icon=":material/share:"):
-                share_subject_dialog(sub['name'], sub['subject_code'])
-                st.space()
+            def share_button(subject=sub):
+                if st.button(f"Share Code: {subject['name']}", key=f"share_{subject['subject_code']}", icon=":material/share:"):
+                    share_subject_dialog(subject['name'], subject['subject_code'])
+                    st.space()
 
-        subject_card(
+            subject_card(
                 name = sub['name'],
                 code = sub['subject_code'],
                 section = sub['section'],
                 stats=stats,
                 footer_callback=share_button  
-        )
+            )
     else:
         st.info("NO SUBJECTS FOUND . CREATE ONE ABOVE")
 
@@ -235,26 +236,30 @@ def teacher_tab_attandance_records():
             "is_present":bool(r.get('is_present', False))
         })
 
-        df  = pd.DataFrame(data)
+    if not data:
+        st.info("No attendance records found")
+        return
 
-        summary  = (
-            df.groupby(['ts_group','Time','Subject','Subject Code','is_present'])
-            .agg(
-                present_count = ('is_present','sum'),
-                Total_Count = ('is_present', 'count')
-            ).reset_index()
-        )
+    df  = pd.DataFrame(data)
 
-        summary['Attendance Stats'] = (
+    summary  = (
+        df.groupby(['ts_group','Time','Subject','Subject Code'])
+        .agg(
+            present_count = ('is_present','sum'),
+            Total_Count = ('is_present', 'count')
+        ).reset_index()
+    )
+
+    summary['Attendance Stats'] = (
             "✅" +summary['present_count'].astype(str)+"/"
-            +summary['Total_Count'].astype(str)+'Students'
-        )
+        +summary['Total_Count'].astype(str)+'Students'
+    )
 
-        display_df =(summary.sort_values(by='ts_group', ascending =False)
-                    [['Time', 'Subject','Subject Code','Attendance Stats']]
-        )
+    display_df =(summary.sort_values(by='ts_group', ascending =False)
+                [['Time', 'Subject','Subject Code','Attendance Stats']]
+    )
 
-        st.dataframe(display_df, width='stretch', hide_index=True)
+    st.dataframe(display_df, width='stretch', hide_index=True)
 
 
 
