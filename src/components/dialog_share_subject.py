@@ -4,7 +4,7 @@ import io
 
 @st.dialog("Share subject Link")
 def share_subject_dialog(name, subject_code):
-    app_domain = "DeepAttend-main.streamlit.app"
+    app_domain = "deep-attend-main.streamlit.app"
     join_url =  f"{app_domain}?join-code={subject_code}"
 
     st.header("Scan to join")
