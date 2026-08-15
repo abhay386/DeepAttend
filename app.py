@@ -7,7 +7,7 @@ def main():
 
     st.set_page_config(
         page_title="DeepAttend- Making Attendance faster using AI",
-        page_icon='https://i.ibb.co/844D9Lrt/mascot-student.png'
+        page_icon='src/images/attandace_logo.png'
     )
     if 'login-type' not in st.session_state:
         st.session_state['login-type'] = None
